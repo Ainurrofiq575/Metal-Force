@@ -16,7 +16,7 @@ public class PlayerInputHandler : MonoBehaviour
     [SerializeField] private string sprint = "Sprint";
     [SerializeField] private string fire = "Fire";
     [SerializeField] private string toggleWeapon = "ToggleWeapon";
-    [SerializeField] private string rotateObject = "RotateObject"; //ini
+    [SerializeField] private string rotateObject = "RotateObject";
     [SerializeField] private string reload = "Reload";
 
     private InputAction movementAction;
@@ -25,22 +25,21 @@ public class PlayerInputHandler : MonoBehaviour
     private InputAction sprintAction;
     private InputAction fireAction;
     private InputAction toggleWeaponAction;
-    private InputAction rotateObjectAction; //ini
+    private InputAction rotateObjectAction;
     private InputAction reloadAction;
 
-
     public Vector2 MovementInput { get; private set; }
-    public void SetMovementInput(Vector2 input)
-    {
-        MovementInput = input;
-    }
     public Vector2 RotationInput { get; private set; }
+
     public bool JumpTriggered { get; private set; }
     public bool SprintTriggered { get; private set; }
     public bool FireTriggered { get; private set; }
     public bool ToggleWeaponTriggered { get; private set; }
     public bool RotateObjectTriggered { get; private set; }
     public bool ReloadTriggered { get; private set; }
+
+    private bool usingMobileMovement;
+    private bool usingMobileRotation;
 
     private void Awake()
     {
@@ -60,17 +59,35 @@ public class PlayerInputHandler : MonoBehaviour
 
     private void SubscribeActionValuesToInputEvents()
     {
-        movementAction.performed += inputInfo => MovementInput = inputInfo.ReadValue<Vector2>();
-        movementAction.canceled += inputInfo => MovementInput = Vector2.zero;
+        movementAction.performed += inputInfo =>
+        {
+            if (!usingMobileMovement)
+                MovementInput = inputInfo.ReadValue<Vector2>();
+        };
 
-        rotationAction.performed += inputInfo => RotationInput = inputInfo.ReadValue<Vector2>();
-        rotationAction.canceled += inputInfo => RotationInput = Vector2.zero;
+        movementAction.canceled += inputInfo =>
+        {
+            if (!usingMobileMovement)
+                MovementInput = Vector2.zero;
+        };
 
-        jumpAction.performed += inputInfo => JumpTriggered = true;
-        jumpAction.canceled += inputInfo => JumpTriggered = false;
+        rotationAction.performed += inputInfo =>
+        {
+            if (!usingMobileRotation)
+                RotationInput = inputInfo.ReadValue<Vector2>();
+        };
 
-        sprintAction.performed += inputInfo => SprintTriggered = true;
-        sprintAction.canceled += inputInfo => SprintTriggered = false;
+        rotationAction.canceled += inputInfo =>
+        {
+            if (!usingMobileRotation)
+                RotationInput = Vector2.zero;
+        };
+
+        jumpAction.performed += _ => JumpTriggered = true;
+        jumpAction.canceled += _ => JumpTriggered = false;
+
+        sprintAction.performed += _ => SprintTriggered = true;
+        sprintAction.canceled += _ => SprintTriggered = false;
 
         fireAction.performed += _ => FireTriggered = true;
         fireAction.canceled += _ => FireTriggered = false;
@@ -85,20 +102,24 @@ public class PlayerInputHandler : MonoBehaviour
         reloadAction.canceled += _ => ReloadTriggered = false;
     }
 
-    /// <summary>
-    /// Atomically consumes the toggle flag. Returns true if the toggle was set and clears it.
-    /// This prevents external classes from needing write access to the property setter.
-    /// </summary>
-    public bool ConsumeToggleWeaponTriggered()
+    public void SetMovementInput(Vector2 input)
     {
-        if (!ToggleWeaponTriggered) return false;
-        ToggleWeaponTriggered = false;
-        return true;
+        usingMobileMovement = input.magnitude > 0.1f;
+        MovementInput = input;
     }
 
     public void SetRotationInput(Vector2 input)
     {
+        usingMobileRotation = input.magnitude > 0.1f;
         RotationInput = input;
+    }
+
+    public bool ConsumeToggleWeaponTriggered()
+    {
+        if (!ToggleWeaponTriggered) return false;
+
+        ToggleWeaponTriggered = false;
+        return true;
     }
 
     private void OnEnable()

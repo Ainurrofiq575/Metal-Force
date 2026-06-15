@@ -3,16 +3,25 @@ using UnityEngine;
 public class mobil : MonoBehaviour
 {
     [Header("Joystick")]
-    public FixedJoystick joystick;
+    public FixedJoystick steerJoystick;
+    public FixedJoystick moveJoystick;
 
     private float horizontalInput, verticalInput;
-    private float currentSteerAngle, currentbreakForce;
+    private float currentSteerAngle, currentBreakForce;
     private bool isBreaking;
+    private Rigidbody rb;
 
-    [Header("Settings")]
-    [SerializeField] private float motorForce;
-    [SerializeField] private float breakForce;
-    [SerializeField] private float maxSteerAngle;
+    [Header("Car Settings")]
+    [SerializeField] private float motorForce = 1000f;
+    [SerializeField] private float breakForce = 3000f;
+    [SerializeField] private float maxSteerAngle = 12f;
+
+    [Header("Stability Setting")]
+    [SerializeField] private float centerOfMassY = -0.8f;
+
+    [Header("Drift Setting")]
+    [SerializeField] private float normalGrip = 1.2f;
+    [SerializeField] private float driftGrip = 0.8f;
 
     [Header("Wheel Colliders")]
     [SerializeField] private WheelCollider frontLeftWheelCollider;
@@ -26,64 +35,165 @@ public class mobil : MonoBehaviour
     [SerializeField] private Transform rearLeftWheelTransform;
     [SerializeField] private Transform rearRightWheelTransform;
 
+    private void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+
+        // Biar mobil lebih stabil
+        rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
+    }
+
     private void FixedUpdate()
     {
         GetInput();
         HandleMotor();
         HandleSteering();
+        HandleDrift();
         UpdateWheels();
     }
 
     private void GetInput()
     {
-        horizontalInput = joystick.Horizontal;
-        verticalInput = joystick.Vertical;
+        // =========================
+        // KEYBOARD INPUT
+        // =========================
+        float keyboardHorizontal = Input.GetAxis("Horizontal");
+        float keyboardVertical = Input.GetAxis("Vertical");
 
-        isBreaking = false;
+        // =========================
+        // JOYSTICK INPUT
+        // =========================
+        float joystickHorizontal = steerJoystick != null
+            ? steerJoystick.Horizontal
+            : 0f;
+
+        float joystickVertical = moveJoystick != null
+            ? moveJoystick.Vertical
+            : 0f;
+
+        // =========================
+        // PRIORITAS INPUT
+        // Jika joystick digerakkan → pakai joystick
+        // Jika tidak → pakai keyboard
+        // =========================
+        horizontalInput =
+            Mathf.Abs(joystickHorizontal) > 0.1f
+            ? joystickHorizontal
+            : keyboardHorizontal;
+
+        verticalInput =
+            Mathf.Abs(joystickVertical) > 0.1f
+            ? joystickVertical
+            : keyboardVertical;
+
+        // Tombol rem keyboard
+        isBreaking = Input.GetKey(KeyCode.Space);
     }
 
     private void HandleMotor()
     {
-        frontLeftWheelCollider.motorTorque = verticalInput * motorForce;
-        frontRightWheelCollider.motorTorque = verticalInput * motorForce;
+        frontLeftWheelCollider.motorTorque =
+            verticalInput * motorForce;
 
-        currentbreakForce = isBreaking ? breakForce : 0f;
+        frontRightWheelCollider.motorTorque =
+            verticalInput * motorForce;
+
+        currentBreakForce =
+            isBreaking ? breakForce * 0.3f : 0f;
 
         ApplyBreaking();
     }
 
     private void ApplyBreaking()
     {
-        frontRightWheelCollider.brakeTorque = currentbreakForce;
-        frontLeftWheelCollider.brakeTorque = currentbreakForce;
-        rearLeftWheelCollider.brakeTorque = currentbreakForce;
-        rearRightWheelCollider.brakeTorque = currentbreakForce;
+        frontLeftWheelCollider.brakeTorque =
+            currentBreakForce;
+
+        frontRightWheelCollider.brakeTorque =
+            currentBreakForce;
+
+        rearLeftWheelCollider.brakeTorque =
+            isBreaking ? breakForce : 0f;
+
+        rearRightWheelCollider.brakeTorque =
+            isBreaking ? breakForce : 0f;
+    }
+
+    private void HandleDrift()
+    {
+        if (isBreaking)
+            SetRearGrip(driftGrip);
+        else
+            SetRearGrip(normalGrip);
+    }
+
+    private void SetRearGrip(float grip)
+    {
+        WheelFrictionCurve leftFriction =
+            rearLeftWheelCollider.sidewaysFriction;
+
+        WheelFrictionCurve rightFriction =
+            rearRightWheelCollider.sidewaysFriction;
+
+        leftFriction.stiffness = grip;
+        rightFriction.stiffness = grip;
+
+        rearLeftWheelCollider.sidewaysFriction =
+            leftFriction;
+
+        rearRightWheelCollider.sidewaysFriction =
+            rightFriction;
     }
 
     private void HandleSteering()
     {
-        currentSteerAngle = maxSteerAngle * horizontalInput;
+        currentSteerAngle =
+            maxSteerAngle * horizontalInput;
 
-        frontLeftWheelCollider.steerAngle = currentSteerAngle;
-        frontRightWheelCollider.steerAngle = currentSteerAngle;
+        frontLeftWheelCollider.steerAngle =
+            currentSteerAngle;
+
+        frontRightWheelCollider.steerAngle =
+            currentSteerAngle;
     }
 
     private void UpdateWheels()
     {
-        UpdateSingleWheel(frontLeftWheelCollider, frontLeftWheelTransform);
-        UpdateSingleWheel(frontRightWheelCollider, frontRightWheelTransform);
-        UpdateSingleWheel(rearLeftWheelCollider, rearLeftWheelTransform);
-        UpdateSingleWheel(rearRightWheelCollider, rearRightWheelTransform);
+        UpdateWheelPos(
+            frontLeftWheelCollider,
+            frontLeftWheelTransform
+        );
+
+        UpdateWheelPos(
+            frontRightWheelCollider,
+            frontRightWheelTransform
+        );
+
+        UpdateWheelPos(
+            rearLeftWheelCollider,
+            rearLeftWheelTransform
+        );
+
+        UpdateWheelPos(
+            rearRightWheelCollider,
+            rearRightWheelTransform
+        );
     }
 
-    private void UpdateSingleWheel(WheelCollider wheelCollider, Transform wheelTransform)
+    private void UpdateWheelPos(
+        WheelCollider wheelCollider,
+        Transform wheelTransform
+    )
     {
         Vector3 pos;
         Quaternion rot;
 
-        wheelCollider.GetWorldPose(out pos, out rot);
+        wheelCollider.GetWorldPose(
+            out pos,
+            out rot
+        );
 
-        wheelTransform.rotation = rot;
         wheelTransform.position = pos;
+        wheelTransform.rotation = rot;
     }
 }

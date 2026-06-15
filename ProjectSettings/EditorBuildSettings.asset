@@ -5,15 +5,15 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
     path: Assets/Metal Force/MainMenu.unity
     guid: 8a5b897ea9c876a49b44165c5d258e55
-  - enabled: 0
+  - enabled: 1
     path: Assets/Metal Force/Level1.unity
     guid: 2de76cc279df6fb4b8e600b5072c6bb6
   - enabled: 1
-    path: Assets/Scenes/Metal Force/Joystek.unity
-    guid: 6e883213ddfe3da4c8df66e522033aa2
+    path: Assets/Metal Force/Level2.unity
+    guid: bd7af9e558fb4ee43be42217679aa60a
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
