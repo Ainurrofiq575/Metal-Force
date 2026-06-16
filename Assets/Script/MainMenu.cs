@@ -5,24 +5,28 @@ public class MainMenu : MonoBehaviour
 {
     [Header("Panels")]
     public GameObject optionsPanel;
+    public GameObject playGuidePanel;
 
-    [Header("Audio")]
-    public AudioSource menuMusic;
-
-    // PLAY
+    // PLAY BUTTON
     public void PlayGame()
+    {
+        playGuidePanel.SetActive(true);
+    }
+
+    // START GAME BUTTON
+    public void StartGame()
     {
         SceneManager.LoadScene("Level1");
     }
 
-    // EXIT
+    // EXIT BUTTON
     public void ExitGame()
     {
         Application.Quit();
         Debug.Log("Game Ditutup");
     }
 
-    // HOW TO PLAY PANEL
+    // SETTINGS PANEL
     public void OpenOptions()
     {
         optionsPanel.SetActive(true);
@@ -33,25 +37,9 @@ public class MainMenu : MonoBehaviour
         optionsPanel.SetActive(false);
     }
 
-    // MUSIC TOGGLE
-public void ToggleMusic(bool isOn)
-{
-    if (menuMusic == null) return;
-
-    if (isOn)
+    // CLOSE PLAY GUIDE PANEL
+    public void ClosePlayGuide()
     {
-        menuMusic.mute = false;
-
-        if (!menuMusic.isPlaying)
-        {
-            menuMusic.Play();
-        }
+        playGuidePanel.SetActive(false);
     }
-    else
-    {
-        menuMusic.mute = true;
-    }
-
-    Debug.Log("Music: " + (isOn ? "ON" : "OFF"));
-}
 }
