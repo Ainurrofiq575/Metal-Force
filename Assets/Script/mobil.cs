@@ -6,6 +6,12 @@ public class mobil : MonoBehaviour
     public FixedJoystick steerJoystick;
     public FixedJoystick moveJoystick;
 
+    [Header("Mobile Buttons")]
+    public MobileButton gasButton;
+    public MobileButton remButton;
+    public MobileButton leftButton;
+    public MobileButton rightButton;
+
     private float horizontalInput, verticalInput;
     private float currentSteerAngle, currentBreakForce;
     private bool isBreaking;
@@ -39,8 +45,10 @@ public class mobil : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
 
-        // Biar mobil lebih stabil
-        rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
+        if (rb != null)
+        {
+            rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
+        }
     }
 
     private void FixedUpdate()
@@ -55,10 +63,11 @@ public class mobil : MonoBehaviour
     private void GetInput()
     {
         // =========================
-        // KEYBOARD INPUT
+        // KEYBOARD INPUT LAPTOP
         // =========================
         float keyboardHorizontal = Input.GetAxis("Horizontal");
         float keyboardVertical = Input.GetAxis("Vertical");
+        bool keyboardBrake = Input.GetKey(KeyCode.Space);
 
         // =========================
         // JOYSTICK INPUT
@@ -72,22 +81,71 @@ public class mobil : MonoBehaviour
             : 0f;
 
         // =========================
-        // PRIORITAS INPUT
-        // Jika joystick digerakkan → pakai joystick
-        // Jika tidak → pakai keyboard
+        // MOBILE BUTTON INPUT
         // =========================
-        horizontalInput =
-            Mathf.Abs(joystickHorizontal) > 0.1f
-            ? joystickHorizontal
-            : keyboardHorizontal;
+        float mobileHorizontal = 0f;
+        float mobileVertical = 0f;
+        bool mobileBrake = false;
 
-        verticalInput =
-            Mathf.Abs(joystickVertical) > 0.1f
-            ? joystickVertical
-            : keyboardVertical;
+        if (leftButton != null && leftButton.isPressed)
+        {
+            mobileHorizontal = -1f;
+        }
 
-        // Tombol rem keyboard
-        isBreaking = Input.GetKey(KeyCode.Space);
+        if (rightButton != null && rightButton.isPressed)
+        {
+            mobileHorizontal = 1f;
+        }
+
+        if (gasButton != null && gasButton.isPressed)
+        {
+            mobileVertical = 1f;
+        }
+
+        if (remButton != null && remButton.isPressed)
+        {
+            mobileVertical = -1f;
+        }
+
+        // =========================
+        // PRIORITAS BELOK
+        // Mobile Button > Joystick > Keyboard
+        // =========================
+        if (Mathf.Abs(mobileHorizontal) > 0.1f)
+        {
+            horizontalInput = mobileHorizontal;
+        }
+        else if (Mathf.Abs(joystickHorizontal) > 0.1f)
+        {
+            horizontalInput = joystickHorizontal;
+        }
+        else
+        {
+            horizontalInput = keyboardHorizontal;
+        }
+
+        // =========================
+        // PRIORITAS GAS
+        // Mobile Button > Joystick > Keyboard
+        // =========================
+        if (Mathf.Abs(mobileVertical) > 0.1f)
+        {
+            verticalInput = mobileVertical;
+        }
+        else if (Mathf.Abs(joystickVertical) > 0.1f)
+        {
+            verticalInput = joystickVertical;
+        }
+        else
+        {
+            verticalInput = keyboardVertical;
+        }
+
+        // =========================
+        // REM
+        // Tombol REM mobile atau Space laptop
+        // =========================
+        isBreaking = keyboardBrake;
     }
 
     private void HandleMotor()
@@ -122,9 +180,13 @@ public class mobil : MonoBehaviour
     private void HandleDrift()
     {
         if (isBreaking)
+        {
             SetRearGrip(driftGrip);
+        }
         else
+        {
             SetRearGrip(normalGrip);
+        }
     }
 
     private void SetRearGrip(float grip)

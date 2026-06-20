@@ -1,31 +1,75 @@
-using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class FinishLevel1 : MonoBehaviour
 {
-    public GameObject finishMessage;
+    [Header("UI Panel")]
+    public GameObject levelCompletePanel;
+
+    private bool levelFinished = false;
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.transform.root.CompareTag("Player"))
+        if (other.transform.root.CompareTag("Player") && !levelFinished)
         {
-            if (GameManager.instance.checkpoint >= GameManager.instance.maxCheckpoint)
-            {
-                StartCoroutine(ShowFinishMessage());
-            }
-            else
-            {
-                Debug.Log("Lewati semua checkpoint dulu!");
-            }
+            CheckFinishCondition();
         }
     }
 
-    IEnumerator ShowFinishMessage()
+    void CheckFinishCondition()
     {
-        finishMessage.SetActive(true);
+        if (GameManager.instance == null)
+        {
+            Debug.LogWarning("GameManager belum ditemukan!");
+            return;
+        }
 
-        yield return new WaitForSeconds(2f);
+        if (GameManager.instance.timeOver)
+        {
+            Debug.Log("WAKTU HABIS! Tidak bisa finish.");
+            return;
+        }
 
-        finishMessage.SetActive(false);
+        if (GameManager.instance.point < GameManager.instance.maxPoint)
+        {
+            Debug.Log("Point belum lengkap!");
+            return;
+        }
+
+        if (GameManager.instance.checkpoint < GameManager.instance.maxCheckpoint)
+        {
+            Debug.Log("Checkpoint belum lengkap!");
+            return;
+        }
+
+        LevelComplete();
+    }
+
+    void LevelComplete()
+    {
+        levelFinished = true;
+
+        GameManager.instance.StopTimer();
+
+        if (levelCompletePanel != null)
+        {
+            levelCompletePanel.SetActive(true);
+        }
+
+        Time.timeScale = 0f;
+
+        Debug.Log("LEVEL 1 COMPLETE!");
+    }
+
+    public void NextLevel()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Level2");
+    }
+
+    public void BackToMainMenu()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("MainMenu");
     }
 }

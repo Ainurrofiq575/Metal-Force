@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -18,9 +19,15 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI timeText;
 
     [Header("Timer")]
-    public float timeRemaining = 180f; // 180 detik = 3 menit
+    public float startTime = 180f; // 180 detik = 3 menit
+    public float timeRemaining;
     public bool timerRunning = false;
     public bool timeOver = false;
+
+    [Header("Game Over")]
+    public GameObject gameOverPanel;
+
+    private bool gameOver = false;
 
     private void Awake()
     {
@@ -29,13 +36,28 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        Time.timeScale = 1f;
+
+        point = 0;
+        checkpoint = 0;
+
+        timeRemaining = startTime;
+        timerRunning = false;
+        timeOver = false;
+        gameOver = false;
+
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false);
+        }
+
         UpdatePointText();
         UpdateTimeText();
     }
 
     void Update()
     {
-        if (timerRunning && !timeOver)
+        if (timerRunning && !timeOver && !gameOver)
         {
             if (timeRemaining > 0)
             {
@@ -49,15 +71,14 @@ public class GameManager : MonoBehaviour
                 timeOver = true;
 
                 UpdateTimeText();
-
-                Debug.Log("WAKTU HABIS!");
+                ShowGameOver();
             }
         }
     }
 
     public void StartTimer()
     {
-        if (!timerRunning && !timeOver)
+        if (!timerRunning && !timeOver && !gameOver)
         {
             timerRunning = true;
             Debug.Log("Timer dimulai!");
@@ -96,5 +117,31 @@ public class GameManager : MonoBehaviour
         int seconds = Mathf.FloorToInt(timeRemaining % 60);
 
         timeText.text = "TIME: " + minutes.ToString("00") + ":" + seconds.ToString("00");
+    }
+
+    void ShowGameOver()
+    {
+        gameOver = true;
+
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+        }
+
+        Time.timeScale = 0f;
+
+        Debug.Log("GAME OVER! WAKTU HABIS.");
+    }
+
+    public void RetryLevel()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void BackToMainMenu()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("MainMenu");
     }
 }
