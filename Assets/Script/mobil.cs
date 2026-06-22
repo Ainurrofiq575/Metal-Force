@@ -29,6 +29,12 @@ public class mobil : MonoBehaviour
     [SerializeField] private float normalGrip = 1.2f;
     [SerializeField] private float driftGrip = 0.8f;
 
+    [Header("Engine Audio")]
+    public AudioSource engineSource;
+    public float engineGasVolume = 0.45f;
+    public float engineIdleVolume = 0.08f;
+    public float engineVolumeSpeed = 4f;
+
     [Header("Wheel Colliders")]
     [SerializeField] private WheelCollider frontLeftWheelCollider;
     [SerializeField] private WheelCollider frontRightWheelCollider;
@@ -45,6 +51,23 @@ public class mobil : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
 
+        if (engineSource == null)
+        {
+            engineSource = GetComponent<AudioSource>();
+        }
+
+        if (engineSource != null)
+        {
+            engineSource.loop = true;
+
+            if (!engineSource.isPlaying)
+            {
+                engineSource.Play();
+            }
+
+            engineSource.volume = engineIdleVolume;
+        }
+
         if (rb != null)
         {
             rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
@@ -57,6 +80,7 @@ public class mobil : MonoBehaviour
         HandleMotor();
         HandleSteering();
         HandleDrift();
+        HandleEngineSound();
         UpdateWheels();
     }
 
@@ -187,6 +211,24 @@ public class mobil : MonoBehaviour
         {
             SetRearGrip(normalGrip);
         }
+    }
+
+    private void HandleEngineSound()
+    {
+        if (engineSource == null) return;
+
+        float targetVolume = engineIdleVolume;
+
+        if (verticalInput > 0.1f)
+        {
+            targetVolume = engineGasVolume;
+        }
+
+        engineSource.volume = Mathf.Lerp(
+            engineSource.volume,
+            targetVolume,
+            engineVolumeSpeed * Time.deltaTime
+        );
     }
 
     private void SetRearGrip(float grip)

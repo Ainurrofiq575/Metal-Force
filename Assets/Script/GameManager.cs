@@ -19,13 +19,17 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI timeText;
 
     [Header("Timer")]
-    public float startTime = 180f; // 180 detik = 3 menit
+    public float startTime = 180f;
     public float timeRemaining;
     public bool timerRunning = false;
     public bool timeOver = false;
 
     [Header("Game Over")]
     public GameObject gameOverPanel;
+
+    [Header("SFX")]
+    public AudioSource sfxSource;
+    public AudioClip eggPickupClip;
 
     private bool gameOver = false;
 
@@ -37,6 +41,11 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         Time.timeScale = 1f;
+
+        if (sfxSource == null)
+        {
+            sfxSource = GetComponent<AudioSource>();
+        }
 
         point = 0;
         checkpoint = 0;
@@ -94,29 +103,47 @@ public class GameManager : MonoBehaviour
     {
         point++;
 
+        PlayEggPickupSound();
+
         UpdatePointText();
 
         Debug.Log("Point: " + point);
+    }
+
+    void PlayEggPickupSound()
+    {
+        if (sfxSource != null && eggPickupClip != null)
+        {
+            sfxSource.PlayOneShot(eggPickupClip);
+        }
     }
 
     public void AddCheckpoint()
     {
         checkpoint++;
 
+        PlayEggPickupSound();
+
         Debug.Log("Checkpoint: " + checkpoint);
     }
 
     void UpdatePointText()
     {
-        pointText.text = "POINT: " + point + "/" + maxPoint;
+        if (pointText != null)
+        {
+            pointText.text = "POINT: " + point + "/" + maxPoint;
+        }
     }
 
     void UpdateTimeText()
     {
-        int minutes = Mathf.FloorToInt(timeRemaining / 60);
-        int seconds = Mathf.FloorToInt(timeRemaining % 60);
+        if (timeText != null)
+        {
+            int minutes = Mathf.FloorToInt(timeRemaining / 60);
+            int seconds = Mathf.FloorToInt(timeRemaining % 60);
 
-        timeText.text = "TIME: " + minutes.ToString("00") + ":" + seconds.ToString("00");
+            timeText.text = "TIME: " + minutes.ToString("00") + ":" + seconds.ToString("00");
+        }
     }
 
     void ShowGameOver()
