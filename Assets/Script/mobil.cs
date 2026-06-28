@@ -51,6 +51,11 @@ public class mobil : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
 
+        if (rb != null)
+        {
+            rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
+        }
+
         if (engineSource == null)
         {
             engineSource = GetComponent<AudioSource>();
@@ -60,17 +65,24 @@ public class mobil : MonoBehaviour
         {
             engineSource.loop = true;
 
-            if (!engineSource.isPlaying)
+            if (AudioManager.instance != null && !AudioManager.instance.soundOn)
             {
-                engineSource.Play();
+                engineSource.volume = 0f;
+
+                if (engineSource.isPlaying)
+                {
+                    engineSource.Stop();
+                }
             }
+            else
+            {
+                engineSource.volume = engineIdleVolume;
 
-            engineSource.volume = engineIdleVolume;
-        }
-
-        if (rb != null)
-        {
-            rb.centerOfMass = new Vector3(0f, centerOfMassY, 0f);
+                if (!engineSource.isPlaying)
+                {
+                    engineSource.Play();
+                }
+            }
         }
     }
 
@@ -109,7 +121,6 @@ public class mobil : MonoBehaviour
         // =========================
         float mobileHorizontal = 0f;
         float mobileVertical = 0f;
-        bool mobileBrake = false;
 
         if (leftButton != null && leftButton.isPressed)
         {
@@ -167,7 +178,7 @@ public class mobil : MonoBehaviour
 
         // =========================
         // REM
-        // Tombol REM mobile atau Space laptop
+        // Space laptop untuk brake / drift
         // =========================
         isBreaking = keyboardBrake;
     }
@@ -217,9 +228,29 @@ public class mobil : MonoBehaviour
     {
         if (engineSource == null) return;
 
+        // SOUND OFF = ENGINE BENAR-BENAR MATI
+        if (AudioManager.instance != null && !AudioManager.instance.soundOn)
+        {
+            engineSource.volume = 0f;
+
+            if (engineSource.isPlaying)
+            {
+                engineSource.Stop();
+            }
+
+            return;
+        }
+
+        // SOUND ON = ENGINE HIDUP LAGI
+        if (!engineSource.isPlaying)
+        {
+            engineSource.Play();
+        }
+
         float targetVolume = engineIdleVolume;
 
-        if (verticalInput > 0.1f)
+        // MAJU ATAU MUNDUR SAMA-SAMA BUNYI GAS
+        if (Mathf.Abs(verticalInput) > 0.1f)
         {
             targetVolume = engineGasVolume;
         }

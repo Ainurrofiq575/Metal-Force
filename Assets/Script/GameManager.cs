@@ -38,31 +38,39 @@ public class GameManager : MonoBehaviour
         instance = this;
     }
 
-    void Start()
+void Start()
+{
+    Time.timeScale = 1f;
+
+    if (sfxSource == null)
+        sfxSource = GetComponent<AudioSource>();
+
+    // 🔥 STOP ONLY BG MUSIC (SAFE VERSION)
+    AudioSource[] allAudio = FindObjectsOfType<AudioSource>();
+
+foreach (AudioSource a in allAudio)
+{
+    if (a.loop && a.gameObject.name.ToLower().Contains("music"))
     {
-        Time.timeScale = 1f;
-
-        if (sfxSource == null)
-        {
-            sfxSource = GetComponent<AudioSource>();
-        }
-
-        point = 0;
-        checkpoint = 0;
-
-        timeRemaining = startTime;
-        timerRunning = false;
-        timeOver = false;
-        gameOver = false;
-
-        if (gameOverPanel != null)
-        {
-            gameOverPanel.SetActive(false);
-        }
-
-        UpdatePointText();
-        UpdateTimeText();
+        a.Stop();
     }
+}
+
+    point = 0;
+    checkpoint = 0;
+
+    timeRemaining = startTime;
+    timerRunning = false;
+    timeOver = false;
+    gameOver = false;
+
+    if (gameOverPanel != null)
+        gameOverPanel.SetActive(false);
+
+    UpdatePointText();
+    UpdateTimeText();
+}
+    
 
     void Update()
     {
@@ -78,22 +86,19 @@ public class GameManager : MonoBehaviour
                 timeRemaining = 0;
                 timerRunning = false;
                 timeOver = true;
-
-                UpdateTimeText();
                 ShowGameOver();
             }
         }
     }
 
+    // ✅ INI WAJIB ADA (BIAR STARTGATE TIDAK ERROR)
     public void StartTimer()
     {
         if (!timerRunning && !timeOver && !gameOver)
-        {
             timerRunning = true;
-            Debug.Log("Timer dimulai!");
-        }
     }
 
+    // ✅ INI WAJIB ADA (BIAR FINISHLEVEL TIDAK ERROR)
     public void StopTimer()
     {
         timerRunning = false;
@@ -103,46 +108,46 @@ public class GameManager : MonoBehaviour
     {
         point++;
 
+        if (AudioManager.instance != null && !AudioManager.instance.soundOn)
+            return;
+
         PlayEggPickupSound();
-
         UpdatePointText();
-
-        Debug.Log("Point: " + point);
-    }
-
-    void PlayEggPickupSound()
-    {
-        if (sfxSource != null && eggPickupClip != null)
-        {
-            sfxSource.PlayOneShot(eggPickupClip);
-        }
     }
 
     public void AddCheckpoint()
     {
         checkpoint++;
 
-        PlayEggPickupSound();
+        if (AudioManager.instance != null && !AudioManager.instance.soundOn)
+            return;
 
-        Debug.Log("Checkpoint: " + checkpoint);
+        PlayEggPickupSound();
+    }
+
+    void PlayEggPickupSound()
+    {
+        if (AudioManager.instance != null && !AudioManager.instance.soundOn)
+            return;
+
+        if (sfxSource != null && eggPickupClip != null)
+            sfxSource.PlayOneShot(eggPickupClip);
     }
 
     void UpdatePointText()
     {
         if (pointText != null)
-        {
             pointText.text = "POINT: " + point + "/" + maxPoint;
-        }
     }
 
     void UpdateTimeText()
     {
         if (timeText != null)
         {
-            int minutes = Mathf.FloorToInt(timeRemaining / 60);
-            int seconds = Mathf.FloorToInt(timeRemaining % 60);
+            int m = Mathf.FloorToInt(timeRemaining / 60);
+            int s = Mathf.FloorToInt(timeRemaining % 60);
 
-            timeText.text = "TIME: " + minutes.ToString("00") + ":" + seconds.ToString("00");
+            timeText.text = "TIME: " + m.ToString("00") + ":" + s.ToString("00");
         }
     }
 
@@ -151,13 +156,9 @@ public class GameManager : MonoBehaviour
         gameOver = true;
 
         if (gameOverPanel != null)
-        {
             gameOverPanel.SetActive(true);
-        }
 
         Time.timeScale = 0f;
-
-        Debug.Log("GAME OVER! WAKTU HABIS.");
     }
 
     public void RetryLevel()

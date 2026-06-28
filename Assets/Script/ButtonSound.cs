@@ -7,10 +7,13 @@ public class ButtonSound : MonoBehaviour
 
     public void PlayClick()
     {
+        // 🔥 GLOBAL AUDIO CHECK (REVISI DOSEN)
+        if (AudioManager.instance != null && !AudioManager.instance.soundOn)
+            return;
+
         if (clickSource != null && clickClip != null)
         {
             clickSource.PlayOneShot(clickClip);
-            Debug.Log("Click sound played");
         }
         else
         {
