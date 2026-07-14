@@ -11,6 +11,10 @@ public class AudioManager : MonoBehaviour
     [Header("Music")]
     public AudioSource bgMusic;
 
+    [Header("SFX")]
+    public AudioSource sfxSource;
+    public AudioClip clickClip;
+
     private void Awake()
     {
         if (instance == null)
@@ -96,6 +100,21 @@ public class AudioManager : MonoBehaviour
         if (bgMusic != null)
         {
             bgMusic.Stop();
+        }
+    }
+
+    public void PlayClick()
+    {
+        if (!soundOn) return;
+
+        if (sfxSource != null && clickClip != null)
+        {
+            sfxSource.PlayOneShot(clickClip);
+            Debug.Log("CLICK SOUND");
+        }
+        else
+        {
+            Debug.LogWarning("SFX Source atau Click Clip belum diisi");
         }
     }
 

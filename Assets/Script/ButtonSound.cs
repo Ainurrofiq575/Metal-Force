@@ -1,23 +1,33 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ButtonSound : MonoBehaviour
 {
-    public AudioSource clickSource;
-    public AudioClip clickClip;
+    private Button button;
 
-    public void PlayClick()
+    private void Awake()
     {
-        // 🔥 GLOBAL AUDIO CHECK (REVISI DOSEN)
-        if (AudioManager.instance != null && !AudioManager.instance.soundOn)
-            return;
+        button = GetComponent<Button>();
 
-        if (clickSource != null && clickClip != null)
+        if (button != null)
         {
-            clickSource.PlayOneShot(clickClip);
+            button.onClick.AddListener(PlayClick);
         }
-        else
+    }
+
+    private void OnDestroy()
+    {
+        if (button != null)
         {
-            Debug.LogWarning("Click Source atau Click Clip belum diisi");
+            button.onClick.RemoveListener(PlayClick);
+        }
+    }
+
+    private void PlayClick()
+    {
+        if (AudioManager.instance != null)
+        {
+            AudioManager.instance.PlayClick();
         }
     }
 }
